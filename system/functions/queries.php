@@ -45,6 +45,13 @@
       return mysqli_query($link,$mysql);
     }
 
+    function getAllItemsOrderedASC($orderby,$tbl){
+      global $link;
+      $mysql="SELECT * FROM ".$tbl;
+      $mysql.=" ORDER BY ".$orderby." ASC;";
+      return mysqli_query($link,$mysql);
+    }
+
     function getAllItemsOrderDes($order,$tbl){
       global $link;
       $mysql="SELECT * FROM ".$tbl; 

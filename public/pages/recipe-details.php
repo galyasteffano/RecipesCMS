@@ -6,40 +6,57 @@
 
 
     $link=connectToDB('db_recipes');
-	$result=getAllItems('tbl_quantity');
+	$result_qty=getAllItems('tbl_quantity');
 	$ingredient_result=getAllItems('tbl_ingredient');
 
     if ($_SERVER['REQUEST_METHOD']=='POST') {
 		//fix this!!
-
-		$recipe['name']= $r_name;  //$_POST['recipe-name'];  //store recipe name
-		$recipe['measure_unit']=$_POST['unit-0'];
-		$recipe['ingredient_id']=intval($_POST['ingredient-0']);
-		$recipe['q_num']=intval($_POST['qty-whole-num-0']);
-		$recipe['q_whole']=intval($_POST['qty-whole-0']);
-		$recipe['q_part']=intval($_POST['qty-half-0']);
-		$recipe['measure_type']=intval($_POST['unit-0']);
-		$recipe['images']="";
-		$recipe['comments']="";
-		$recipe['directions']=$_POST['prep-steps'];
-
-		$sql_recipe_name=getAllItemsOrderDes('recipe_name_id','tbl_recipe_names'); //get the last 
-
-		if($_POST['btn_add']==='add_ingredients'){
-			$recipe_name=mysqli_fetch_assoc($sql_recipe_name);
-			$recipe_id=intval($recipe_name['recipe_name_id']);
-			if(saveIngredients($recipe_id))
-				echo "Ingredients added!";	
+		if($_POST['btn_add']==='add_custom_ingredient'){
+			$new_ingredient=$_POST['new-ingredient'];
+			$mysql=insertItem($new_ingredient,'ingredient_name','tbl_ingredient');
+            if ($mysql) {
+                echo $new_ingredient." was added to the list";
+                $ingredient_result=getAllItemsOrderedASC('ingredient_name','tbl_ingredient'); //refresh the ingreient query so the list of ingredients is updated and includes the new ingredient
+            }
 		}
-		else if($_POST['btn_add']==='submit'){
-		
-			$qry=getAllItemsOrderDes('recipe_name_id','tbl_recipe_names');
-			$recipe_name=mysqli_fetch_assoc($qry);
-			$recipe_id=intval($recipe_name['recipe_name_id']);
-		
-			if(mysqli_query($link,saveRecipe($recipe_id))) //todo: write try catch here and remove var_dump
-				header("Location:../index.php");
+		if($_POST['btn_add']==='add_custom_munit'){
+			$new_munit=$_POST['new-munit'];
+			$mysql=insertItem($new_munit,'quantity_name','tbl_quantity');
+			if($mysql){
+				echo $new_munit." was added to the list";
+				$result_qty=getAllItemsOrderedASC('quantity_name','tbl_quantity');
+			}
 		}
+		else {
+            $recipe['name']= $r_name;  //$_POST['recipe-name'];  //store recipe name
+            $recipe['measure_unit']=$_POST['unit-0'];
+            $recipe['ingredient_id']=intval($_POST['ingredient-0']);
+            $recipe['q_num']=intval($_POST['qty-whole-num-0']);
+            $recipe['q_whole']=intval($_POST['qty-whole-0']);
+            $recipe['q_part']=intval($_POST['qty-half-0']);
+            $recipe['measure_type']=intval($_POST['unit-0']);
+            $recipe['images']="";
+            $recipe['comments']="";
+            $recipe['directions']=$_POST['prep-steps'];
+
+            $sql_recipe_name=getAllItemsOrderDes('recipe_name_id', 'tbl_recipe_names'); //get the last
+
+            if ($_POST['btn_add']==='add_ingredients') {
+                $recipe_name=mysqli_fetch_assoc($sql_recipe_name);
+                $recipe_id=intval($recipe_name['recipe_name_id']);
+                if (saveIngredients($recipe_id)) {
+                    echo "Ingredients added!";
+                }
+            } elseif ($_POST['btn_add']==='submit') {
+                $qry=getAllItemsOrderDes('recipe_name_id', 'tbl_recipe_names');
+                $recipe_name=mysqli_fetch_assoc($qry);
+                $recipe_id=intval($recipe_name['recipe_name_id']);
+            
+                if (mysqli_query($link, saveRecipe($recipe_id))) { //todo: write try catch here and remove var_dump
+                    header("Location:../index.php");
+                }
+            }
+        }
     }
 
 
@@ -66,6 +83,18 @@
 	</header>
         <h1><?php echo $r_name;?></h1>
 	    <form action="recipe-details.php" method="post" class="form-recipe" novalidate>
+			<br>
+			<div class="adhock">
+				<label for="add-custom-ingredient">ingredient:</label>
+				<input type="text" name="new-ingredient">
+				<button type="submit" name="btn_add" value="add_custom_ingredient">add</button>	
+				<br>
+				<label for="add-custom-munit">measuring uinit:</label>
+				<input type="text" name="new-munit">
+				<button type="submit" name="btn_add" value="add_custom_munit">add</button>
+			</div>
+			<br>	
+
 		   <label for="ingredient">ingredient: </label>
 					<!-- <input type="text" name="ingredient-0" class="ingredient-style"> -->
 			    <select name="ingredient-0" class="ingredient-style">
@@ -74,6 +103,7 @@
 				    <option value="<?php echo $i_result['ingredient_id']?>"><?php echo $i_result['ingredient_name'];?></option>		
 			<?php }; ?>	
 				</select>
+				<!-- <button>+<button> -->
 				<label for="qty">quantity</label>
 				<input type="number" name="qty-whole-num-0" class="qty-style">
 				<input type="number" name="qty-whole-0" class="qty-style">
@@ -81,7 +111,7 @@
 					<!-- 1<sup>1</sup>&frasl;<sub>2</sub> -->
 				<select class="unit-style" name="unit-0">
 					<option value="">Measuring unit</option>
-			<?php  while ($qty_result= mysqli_fetch_assoc($result)){  ?>				
+			<?php  while ($qty_result= mysqli_fetch_assoc($result_qty)){  ?>				
 					<option value="<?php echo $qty_result['quantity_id']; ?>"><?php echo $qty_result['quantity_name']; ?></option>
 			<?php 	};?>		
 				</select>
@@ -89,8 +119,7 @@
 			    <br> <br>
 				<label for="prep-steps">directions</label>
 				<textarea name="prep-steps" id="prep-style" cols="50" rows="11"></textarea>
-			    
-				     
+			         
 				<button type="submit" name="btn_add" value="submit">add recipe</button>
       		
             </form>    
